@@ -32,19 +32,17 @@ namespace bonzo{
     template <class Type>
     class basic_op{
     protected:
-        virtual void swap(primitive_node<Type>&, primitive_node<Type>&); /**< Swap 2 elements. */
-        
-        virtual void sort() = 0;            /**< Sort elements, can be implemented with any algorithm. */
-        virtual void reverse() = 0;         /**< Reverse elements by data structure's definition. */
-        
+        virtual void swap(int, int) = 0;    /**< Swap 2 elements by index. */
+        virtual void insert(Type) = 0;      /**< Insert an elements at the end. */
+        virtual void insert(Type, int) = 0; /**< Insert an elements by index. */
+        virtual void erase(int) = 0;        /**< Erase an element by index. */
+        virtual void append(Type) = 0;      /**< Remove element by index. */
         virtual vector<int> find(Type) = 0; /**< Find elements by value, should return a vector of index. */
-        virtual void insert(Type) = 0;      /**< Insert an elements by index. */
-        virtual void remove(Type, int) = 0; /**< Remove element by value. */
-        virtual void append(Type) = 0;      /**< Remove element by value. */
         
-        virtual Type operator[](int) = 0;   /**< Subscript operator overload. */
-        virtual void print() = 0;           /**< Print all elements. */
+        virtual void reverse() = 0;         /**< Reverse elements by data structure's definition. */
+        virtual void print() const = 0;     /**< Print all elements. */
         
+        virtual Type operator[](int) const = 0;   /**< Overload operator []. */
     };
     
 }

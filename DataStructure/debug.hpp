@@ -24,7 +24,7 @@ using std::endl;
  *  @var _DEBUG_ON
  *  @brief global switch to turn on / off debug utility.
  **/
-bool _DEBUG_ON = true;
+bool _DEBUG_ON = false;
 
 /**
  *  @fn print_dbg_msg(bool dbg_on = false, const char* dbg_msg = "")

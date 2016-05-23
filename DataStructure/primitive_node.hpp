@@ -8,7 +8,6 @@
  *
  **/
 
-
 #ifndef primitive_node_hpp
 #define primitive_node_hpp
 
@@ -24,19 +23,19 @@ using std::ostream;
 using std::istream;
 
 template <class Type>
-    class primitive_node;
+class primitive_node;
 
 template <class Type>
-    ostream& operator << (ostream&, const primitive_node<Type>&);
+ostream& operator << (ostream&, const primitive_node<Type>&);
 
 template <class Type>
-    istream& operator >> (istream&, primitive_node<Type>&);
+istream& operator >> (istream&, primitive_node<Type>&);
     
 /** @defgroup group1 Class Template Declaration
  *  primitive_node class template declaration
  *
  *  @{
-**/
+ **/
 /**
  * @class primitive_node
  * @brief A primitive_node class.
@@ -60,24 +59,24 @@ public:
         friend ostream& operator << (ostream&, const primitive_node<T>&);
     */
     
-    friend ostream& operator << <Type> (ostream&, const primitive_node&); /**< Bound friend operator << */
-    friend istream& operator >> <Type> (istream&, primitive_node&);       /**< Bound friend operator >> */
-    primitive_node operator = (const primitive_node&);                    /**< operator = */
+    friend ostream& operator << <Type> (ostream&, const primitive_node&); /**< Bound friend operator <<.*/
+    friend istream& operator >> <Type> (istream&, primitive_node&);       /**< Bound friend operator >>.*/
+    primitive_node& operator = (const primitive_node&);                   /**< Operator =.*/
     
-    //~primitive_node();
-    void set_node(Type);                   /**< Set node value. */
-    Type get_node();                       /**< Get node value. */
+    ~primitive_node();
+    void set_node(Type);         /**< Set node value. */
+    Type get_node() const;       /**< Get node value. */
     
-    inline bool is_prev_null(); /**< Check if prev is a nullptr. */
-    inline bool is_next_null(); /**< Check if next is a nullptr. */
+    inline bool is_prev_null();  /**< Check if prev is a nullptr. */
+    inline bool is_next_null();  /**< Check if next is a nullptr. */
+    inline bool is_left_null();  /**< Alias to is_prev_null. */
+    inline bool is_right_null(); /**< Alias to is_next_null. */
     
-    bool (primitive_node::* const is_left_null) ();  /**< Alias to is_prev_null */
-    bool (primitive_node::* const is_right_null) (); /**< Alias to is_next_null */
-    
-
+//    bool (primitive_node::* is_left_null) ();  // usage: (x.*x.is_left_null)()
+//    bool (primitive_node::* is_right_null) (); // usage: (x.*x.is_right_null)()
     
 private:
-    Type node; /**< Data node.*/
+    Type node; /**< Data node. */
 };
 /** @} */ // end of group1
 
@@ -85,7 +84,7 @@ private:
  *  Class template must be defined in .hpp to avoid link error.
  *
  *  @{
-**/
+ **/
 using bonzo::print_dbg_msg;
 using bonzo::_DEBUG_ON;
 
@@ -96,7 +95,7 @@ using bonzo::_DEBUG_ON;
  * @see primitive_node(const primitive_node&)
  **/
 template <class Type>
-primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), left(prev), right(next), is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null){
+primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
     print_dbg_msg(_DEBUG_ON, "primitive_node() is called");
     return;
 };
@@ -109,7 +108,7 @@ primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), left(prev
  * @see primitive_node(const primitive_node&)
  **/
 template <class Type>
-primitive_node<Type>::primitive_node(const Type& rhs) : prev(nullptr), next(nullptr), left(prev), right(next), is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null){
+primitive_node<Type>::primitive_node(const Type& rhs) : prev(nullptr), next(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
     node = rhs;
     print_dbg_msg(_DEBUG_ON, "primitive_node(const Type&) is called");
     return;
@@ -123,13 +122,19 @@ primitive_node<Type>::primitive_node(const Type& rhs) : prev(nullptr), next(null
  * @see primitive_node(const Type&)
  **/
 template <class Type>
-primitive_node<Type>::primitive_node(const primitive_node<Type>& rhs) : left(prev), right(next), is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null){
+primitive_node<Type>::primitive_node(const primitive_node<Type>& rhs) : left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
     node = rhs.node;
     prev = rhs.prev;
     next = rhs.next;
     print_dbg_msg(_DEBUG_ON, "primitive_node(const primitive_node&) is called");
     return;
 };
+
+template <class Type>
+primitive_node<Type>::~primitive_node(){
+    print_dbg_msg(_DEBUG_ON, "~primitive_node() is called");
+    return;
+}
 
 /**
  * @fn primitive_node<Type>::set_node(Type rhs)
@@ -148,15 +153,15 @@ void primitive_node<Type>::set_node(Type rhs){
  * @return node value. Return by copy.
  **/
 template <class Type>
-Type primitive_node<Type>::get_node(){
+Type primitive_node<Type>::get_node() const{
     return node;
 }
 
 /**
  * @fn bool primitive_node<Type>::is_prev_null()
  * @brief Check if prev is nullptr.
- * @retval True prev is a nullptr.
- * @retval False prev is not a nullptr.
+ * @retval true prev is a nullptr.
+ * @retval false prev is not a nullptr.
  **/
 template <class Type>
 inline bool primitive_node<Type>::is_prev_null(){
@@ -166,14 +171,37 @@ inline bool primitive_node<Type>::is_prev_null(){
 /**
  * @fn bool primitive_node<Type>::is_next_null()
  * @brief Check if next is nullptr.
- * @retval True next is a nullptr.
- * @retval False next is not a nullptr.
+ * @retval true next is a nullptr.
+ * @retval false next is not a nullptr.
  **/
 template <class Type>
 inline bool primitive_node<Type>::is_next_null(){
     return next == nullptr;
 }
 
+/**
+ * @fn bool primitive_node<Type>::is_left_null()
+ * @brief Alias to is_prev_null.
+ * @retval true prev is a nullptr.
+ * @retval false prev is not a nullptr.
+**/
+template <class Type>
+inline bool primitive_node<Type>::is_left_null(){
+    return is_prev_null();
+}
+    
+/**
+ * @fn bool primitive_node<Type>::is_next_null()
+ * @brief Alias to is_next_null.
+ * @retval true next is a nullptr.
+ * @retval false next is not a nullptr.
+ **/
+template <class Type>
+inline bool primitive_node<Type>::is_right_null(){
+    return is_next_null();
+}
+
+    
 /**
  * @fn ostream& operator << (ostream& os, const primitive_node<Type>& rhs)
  * @brief Bound friend function template. Overload operator <<.
@@ -199,9 +227,15 @@ istream& operator >> (istream& is, primitive_node<Type>& lhs){
     is >> lhs.node;
     return is;
 }
-    
+ 
+/**
+ * @fn primitive_node<Type> primitive_node<Type>::operator = (const primitive_node<Type>& rhs)
+ * @brief Overload operator =.
+ * @param rhs A reference to primitive_node, will be assigned to *this.
+ * @return *this for cascading assignment.
+ **/
 template <typename Type>
-primitive_node<Type> primitive_node<Type>::operator = (const primitive_node<Type>& rhs){
+primitive_node<Type>& primitive_node<Type>::operator = (const primitive_node<Type>& rhs){
     node = rhs.node;
     prev = rhs.prev;
     next = rhs.next;
