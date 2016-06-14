@@ -1,10 +1,12 @@
-//
-//  linked_list.hpp
-//  DataStructure
-//
-//  Created by Bonzo on 2016/3/31.
-//  Copyright © 2016年 Bonzo. All rights reserved.
-//
+/**
+ *  @file linked_list.hpp
+ *  @brief A linked list class template for user specified Type.
+ *  @version v1.1
+ *
+ *  @author Created by Bonzo on 2016/3/31.
+ *  @author Copyright © 2016 Bonzo. All rights reserved.
+ *
+ **/
 
 #ifndef linked_list_hpp
 #define linked_list_hpp
@@ -34,7 +36,7 @@ template <class Type>
 ostream& operator << (ostream&, const linked_list<Type>&);
 
 /** @defgroup group1 Class Template Declaration
- *  dynamic_array class template declaration
+ *  linked_list class template declaration
  *
  *  @{
  **/
@@ -46,12 +48,13 @@ ostream& operator << (ostream&, const linked_list<Type>&);
  **/    
 template <class Type>
 class linked_list : public basic_op<Type>{
+    typedef primitive_node<Type>* pnode_ptr;
     typedef void (linked_list::* alg_fp)(bool);
     
 public:
-    linked_list();
-    linked_list(const linked_list&);
-    ~linked_list();
+    linked_list();                   /**< Default constructor. */
+    linked_list(const linked_list&); /**< Copy constructor. */
+    ~linked_list();                  /**< Destructor. */
 
     virtual void swap(int, int);            /**< Swap 2 nodes by index. */
     virtual void insert(Type);              /**< Insert a nodes at the end. */
@@ -62,6 +65,8 @@ public:
     virtual void sort(alg_fp, bool = true); /**< Sort nodes, can be implemented with any algorithm. */
     virtual void reverse();                 /**< Reverse nodes by data structure's definition. */
     virtual void print() const;             /**< Print all nodes. */
+    virtual int size() const;               /**< Return number of elements. */
+    virtual bool empty() const;             /**< Check if size is 0. */
     virtual Type operator [](int) const;    /**< Overload operator []. */
 
     linked_list operator + (const linked_list&);   /**< Operator +. */
@@ -80,31 +85,29 @@ public:
     void merge_sort(bool = true);     /**< Sorting algorithm: merge sort.*/
     void quick_sort(bool = true);     /**< Sorting algorithm: quick sort.*/
 
-
-    
-private:
-    primitive_node<Type>* head;
-    primitive_node<Type>* tail;
-    dynamic_array<primitive_node<Type>*> nptr_a;
+//private:
+protected:
+    pnode_ptr head;
+    pnode_ptr tail;
+    dynamic_array<pnode_ptr> nptr_a;
     vector<int>* find_v;
     alg_fp sort_alg;
     
-    void copy(const linked_list&);   /**< Copy from another linked list.*/
-    void connect_neighbor(primitive_node<Type>*, primitive_node<Type>*); /**< Connect 2 unconnected node to be neighbors.*/
-    void new_find_v();               /**< Allocate an vector<int> for find() result. */
-    void concat(const linked_list&); /**< Concat 2 linked list. */
+    void copy(const linked_list&);                   /**< Copy from another linked list.*/
+    void connect_neighbor(pnode_ptr, pnode_ptr);     /**< Connect 2 unconnected node to be neighbors.*/
+    void new_find_v();                               /**< Allocate an vector<int> for find() result. */
+    void concat(const linked_list&);                 /**< Concat 2 linked list. */
 
-    Type node(int) const;                                        /**< Get node value by index. */
-    void __swap__(primitive_node<Type>*, primitive_node<Type>*); /**< Swap 2 nodes. */
-    void __print__(bool = true, bool = true) const;              /**< Print utility. */
-    void __merge_sort_recu__(int, int, bool = true);             /**< Merge sort by recusion. */
-    void __merge_sort_loop__(int, int, bool = true);             /**< Merge sort by loop. */
-    void __merge__(int, int, int, bool = true);                  /**< Merge utility for merge sort. */
+    Type node(int) const;                            /**< Get node value by index. */
+    void __swap__(pnode_ptr, pnode_ptr);             /**< Swap 2 nodes. */
+    void __print__(bool = true, bool = true) const;  /**< Print utility. */
+    void __merge_sort_recu__(int, int, bool = true); /**< Merge sort by recusion. */
+    void __merge_sort_loop__(int, int, bool = true); /**< Merge sort by loop. */
+    void __merge__(int, int, int, bool = true);      /**< Merge utility for merge sort. */
     
-    void __quick_sort_recu__(int, int, bool = true);             /**< Quick sort by recusion. */
-    void __quick_sort_loop__(int, int, bool = true);             /**< Quick sort by loop. */
-    int __partition__(int, int, bool);                           /**< Partition utility for quick sort. */
-
+    void __quick_sort_recu__(int, int, bool = true); /**< Quick sort by recusion. */
+    void __quick_sort_loop__(int, int, bool = true); /**< Quick sort by loop. */
+    int __partition__(int, int, bool);               /**< Partition utility for quick sort. */
 };
 /** @} */ // end of group1
 
@@ -165,7 +168,7 @@ void linked_list<Type>::swap(int i, int j){
  **/
 template <class Type>
 void linked_list<Type>::insert(Type e){
-    insert(e, nptr_a.get_size());
+    insert(e, size());
     return;
 }
 
@@ -179,15 +182,15 @@ template <class Type>
 void linked_list<Type>::insert(Type e, int indx){
 
     int tindx = nptr_a.trans_index(indx, true);
-    primitive_node<Type>* curr = new primitive_node<Type>(e);
-    if(nptr_a.get_size() == 0){
+    pnode_ptr curr = new primitive_node<Type>(e);
+    if(size() == 0){
         nptr_a.push_back(curr);
         head = curr;
         tail = curr;
         return;
     }
     
-    if(indx >= nptr_a.get_size()){
+    if(indx >= size()){
         connect_neighbor(tail, curr);
         tail = curr;
     }else if(tindx == 0){
@@ -208,19 +211,19 @@ void linked_list<Type>::insert(Type e, int indx){
  **/
 template<class Type>
 void linked_list<Type>::erase(int indx){
-    if(nptr_a.get_size() == 0)
+    if(size() == 0)
         return;
 
     int tindx = nptr_a.trans_index(indx, true);
-    primitive_node<Type>* to_erase = nptr_a[tindx];
+    pnode_ptr to_erase = nptr_a[tindx];
     
-    if(nptr_a.get_size() == 1){
+    if(size() == 1){
         head = nullptr;
         tail = nullptr;
     }else{
         if(tindx == 0)
             connect_neighbor(nullptr, nptr_a[tindx + 1]);
-        else if(tindx == nptr_a.get_size() - 1)
+        else if(tindx == size() - 1)
             connect_neighbor(nptr_a[tindx - 1], nullptr);
         else
             connect_neighbor(nptr_a[tindx - 1], nptr_a[tindx + 1]);
@@ -280,13 +283,13 @@ void linked_list<Type>::sort(alg_fp alg, bool ascend){
  **/
 template<class Type>
 void linked_list<Type>::reverse(){
-    primitive_node<Type>* tmp = nullptr;
+    pnode_ptr tmp = nullptr;
     
-    for(int i = 0; i < nptr_a.get_size(); i++){
+    for(int i = 0; i < size(); i++){
         if(i == 0)
             tail = nptr_a[i];
         
-        if(i == nptr_a.get_size() - 1)
+        if(i == size() - 1)
             head = nptr_a[i];
         
         tmp = nptr_a[i] -> prev;
@@ -309,6 +312,29 @@ void linked_list<Type>::print() const{
 }
 
 /**
+ * @fn int linked_list<Type>::size() const
+ * @brief Return number of nodes.
+ * @return nptr_a.get_size() Number of nodes.
+ **/
+template <class Type>
+int linked_list<Type>::size() const{
+    return nptr_a.get_size();
+}
+
+/**
+ * @fn bool linked_list<Type>::empty() const
+ * @brief Check if size is 0.
+ * @retval true size() equals 0.
+ * @retval false size() not equals 0.
+ **/
+template <class Type>
+bool linked_list<Type>::empty() const{
+    return size() == 0;
+}
+
+    
+    
+/**
  * @fn Type linked_list<Type>::operator [](int indx) const
  * @brief Overload operator [].\n
  * Allowed to use negative index.
@@ -319,7 +345,6 @@ template<class Type>
 Type linked_list<Type>::operator [](int indx) const{
     return node(indx);
 }
-
 // public method
     
 //concate 2 linked_list.
@@ -365,11 +390,11 @@ template<class Type>
 bool linked_list<Type>::operator == (const linked_list& rhs){
     if(&rhs == this)
         return true;
-    else if(nptr_a.get_size() != rhs.nptr_a.get_size())
+    else if(size() != rhs.size())
         return false;
     else{
-        for(int i = 0; i < nptr_a.get_size(); i++){
-            if(/*nptr_a[i] -> get_node()*/node(i) != /*rhs.nptr_a[i] -> get_node()*/rhs[i])
+        for(int i = 0; i < size(); i++){
+            if(node(i) != rhs[i])
                 return false;
         }
         
@@ -395,9 +420,9 @@ void linked_list<Type>::clear(int start, int end){
     start = nptr_a.trans_index(start);
     end = nptr_a.trans_index(end);
     
-    if(start <= end && nptr_a.get_size() > 0)
+    if(start <= end && size() > 0)
         for(int i = end; i >= start; i--)
-            if(i >= 0 && i < nptr_a.get_size()){
+            if(i >= 0 && i < size()){
                 erase(i);
             }
     return;
@@ -407,8 +432,8 @@ void linked_list<Type>::clear(int start, int end){
 template <class Type>
 void  linked_list<Type>::bubble_sort(bool ascend){
     // O(n^2)
-    int sorted = nptr_a.get_size();
-    for(int i = 0; i < nptr_a.get_size(); i++){
+    int sorted = size();
+    for(int i = 0; i < size(); i++){
         for(int j = 0; j < sorted; j++)
             if(ascend && node(j) > node(j + 1))
                 swap(j, j + 1);
@@ -424,8 +449,8 @@ void  linked_list<Type>::bubble_sort(bool ascend){
 template <class Type>
 void  linked_list<Type>::selection_sort(bool ascend){
     // O(n^2)
-    int sorted = nptr_a.get_size();
-    for(int i = 0; i < nptr_a.get_size(); i++){
+    int sorted = size();
+    for(int i = 0; i < size(); i++){
         int m = 0;
         for(int j = 0; j < sorted; j++)
             if(ascend && node(j) > node(m))
@@ -442,7 +467,7 @@ template <class Type>
 void  linked_list<Type>::insertion_sort(bool ascend){
     // O(n^2)
     int sorted = 0;
-    for(int i = 0; i < nptr_a.get_size(); i++){
+    for(int i = 0; i < size(); i++){
         for(int j = 0; j < sorted ; j++)
             if(ascend && node(i) < node(j)){
                 insert(node(i), j);
@@ -463,27 +488,26 @@ void  linked_list<Type>::insertion_sort(bool ascend){
     
 template <class Type>
 void  linked_list<Type>::merge_sort(bool ascend){
-    //__merge_sort_recu__(0, nptr_a.get_size() - 1, ascend);
-    __merge_sort_loop__(0, nptr_a.get_size() - 1, ascend);
+    //__merge_sort_recu__(0, size() - 1, ascend);
+    __merge_sort_loop__(0, size() - 1, ascend);
     return;
 }
 
 template <class Type>
 void  linked_list<Type>::quick_sort(bool ascend){
-    __quick_sort_loop__(0, nptr_a.get_size()-1, ascend);
-    //__quick_sort_recu__(0, nptr_a.get_size()-1, ascend);
+    __quick_sort_loop__(0, size()-1, ascend);
+    //__quick_sort_recu__(0, size()-1, ascend);
     return;
 }
 
-    
 // private method
     
 template <class Type>
 void linked_list<Type>::copy(const linked_list& rhs){
-    primitive_node<Type>* curr = nullptr;
+    pnode_ptr curr = nullptr;
     
-    for(int i = 0; i < rhs.nptr_a.get_size(); i ++){
-        if(i  >= nptr_a.get_size()){
+    for(int i = 0; i < rhs.size(); i ++){
+        if(i  >= size()){
             curr = new primitive_node<Type>();
             nptr_a.push_back(curr);
         }
@@ -496,7 +520,7 @@ void linked_list<Type>::copy(const linked_list& rhs){
             head -> prev = nullptr;
             continue;
         }
-        else if(i == rhs.nptr_a.get_size() - 1){
+        else if(i == rhs.size() - 1){
             tail = curr;
             tail -> next = nullptr;
         }
@@ -506,13 +530,13 @@ void linked_list<Type>::copy(const linked_list& rhs){
         
     }
     
-    clear(rhs.nptr_a.get_size(), nptr_a.get_size());
+    clear(rhs.size(), size());
     
     return;
 }
 
 template <class Type>
-void linked_list<Type>::connect_neighbor(primitive_node<Type>* front, primitive_node<Type>* back){
+void linked_list<Type>::connect_neighbor(pnode_ptr front, pnode_ptr back){
     if(front == nullptr){
         head = back;
         back -> prev = nullptr;
@@ -537,19 +561,19 @@ void linked_list<Type>::new_find_v(){
 
 template <class Type>
 void  linked_list<Type>::concat(const linked_list& rhs){
-    int rhs_size = rhs.nptr_a.get_size();
+    int rhs_size = rhs.size();
     for(int i = 0; i < rhs_size; i++)
-        insert(/*rhs.nptr_a[i] -> get_node()*/ rhs[i]);
+        insert(rhs[i]);
     return;
 }
 
 template <class Type>
 Type linked_list<Type>::node(int indx) const{
-    return nptr_a[indx] -> get_node();
+        return nptr_a[indx] -> get_node();
 }
     
 template <class Type>
-void linked_list<Type>::__swap__(primitive_node<Type>* node_a, primitive_node<Type>* node_b){
+void linked_list<Type>::__swap__(pnode_ptr node_a, pnode_ptr node_b){
     /*
      * list                : n1 -> a -> n2 -> b -> n3 -> n4
      * node_a              : n1 <- a -> n2
@@ -560,8 +584,8 @@ void linked_list<Type>::__swap__(primitive_node<Type>* node_a, primitive_node<Ty
      * node_b              : n1 <- b -> n2
      */
     
-    primitive_node<Type>* node_tmp1 = new primitive_node<Type>(*node_a);
-    primitive_node<Type>* node_tmp2 = new primitive_node<Type>(*node_b);
+    pnode_ptr node_tmp1 = new primitive_node<Type>(*node_a);
+    pnode_ptr node_tmp2 = new primitive_node<Type>(*node_b);
     
     *node_a = *node_b;
     connect_neighbor(node_a, node_tmp1 -> next);
@@ -579,7 +603,7 @@ void linked_list<Type>::__swap__(primitive_node<Type>* node_a, primitive_node<Ty
 template <class Type>
 void linked_list<Type>::__print__(bool by_indx, bool ascend) const{
     cout << (ascend ? "HEAD->" : "TAIL->");
-    if(nptr_a.get_size() == 0){
+    if(size() == 0){
         cout << "[]<-";
         cout << (ascend ? "TAIL" : "HEAD") << endl;
         return;
@@ -589,12 +613,12 @@ void linked_list<Type>::__print__(bool by_indx, bool ascend) const{
         int start = ascend ? 0 : -1;
         
         for(int i = start; nptr_a.in_range(i); ascend ? i++ : i--){
-            cout << "[" << node(i)/*nptr_a[i] -> get_node()*/ << "]";
+            cout << "[" << node(i) << "]";
             cout << (ascend ? (nptr_a[i] -> next == nullptr ? "<-" : "->" ) : (nptr_a[i] -> prev == nullptr ? "<-" : "->" ));
             //i = ascend ? i + 1 : i - 1;
         }
     }else{
-        primitive_node<Type>* curr = ascend ? head : tail;
+        pnode_ptr curr = ascend ? head : tail;
         
         while (curr != nullptr){
             cout << "[" << curr -> get_node() << "]";
@@ -623,7 +647,7 @@ void linked_list<Type>::__merge_sort_loop__(int p, int r, bool ascend){
     if (p >= r)
         return;
     
-    int n = nptr_a.get_size();
+    int n = size();
     int step = 2;
     
     while (n >= 1) {
@@ -696,8 +720,6 @@ void linked_list<Type>::__quick_sort_loop__(int p, int r, bool ascend){
     int q = 0;
     
     q = __partition__(pp, pr, ascend);
-    cout << q << endl;
-    cout << *this << endl;
     
     if(pp < q){
         q_vector.push_back(pp);
@@ -713,14 +735,9 @@ void linked_list<Type>::__quick_sort_loop__(int p, int r, bool ascend){
     else
         leaves += 1;
     
-    vector<int>::iterator pit ;
-    for(pit= q_vector.begin(); pit != q_vector.end(); pit++)
-        cout << *pit << " ";
-    cout << endl;
-    
     t = int(q_vector.size());
     
-    while (leaves < r){
+    while (leaves < (r - p + 1)){
         while(t != 0){
             pp = q_vector[q_vector.size() - 1];
             q_vector.pop_back();
@@ -745,13 +762,6 @@ void linked_list<Type>::__quick_sort_loop__(int p, int r, bool ascend){
             }
             else
                 leaves += 1;
-            
-            vector<int>::iterator pit ;
-            for(pit= q_vector.begin(); pit != q_vector.end(); pit++)
-                cout << *pit << " ";
-            cout << endl;
-
-
         }
         t = int(q_vector.size());
     }
@@ -766,8 +776,12 @@ int linked_list<Type>::linked_list<Type>::__partition__(int p, int r, bool ascen
     int pi = p;
     int qi = p;
     int ri = r;
+    bool all_same = true;
     
     while(pi <= ri){
+        if(node(pi) != pivot)
+            all_same = false;
+        
         if(ascend){
             if(node(pi) == pivot)
                 pi += 1;
@@ -801,15 +815,13 @@ int linked_list<Type>::linked_list<Type>::__partition__(int p, int r, bool ascen
                 ri -= 1;
             else if(node(pi) < node(ri))
                 swap(pi, ri);
-            
         }
     }
     
-    if(pi - 1 == r)
-        return (p + r) / 2;
-    else
-        return pi - 1;
+    
+    return all_same ? (p + r) / 2 : qi;
 }
+    
 
 }
 

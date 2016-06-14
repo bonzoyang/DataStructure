@@ -36,7 +36,7 @@ ostream& operator << (ostream&, const dynamic_array<Type>&);
 /**
  * @class dynamic_array
  * @brief A dynamic_array class.
- * A template of pdynamic array, support push/pop node by specified index.\n
+ * A template of dynamic array, support push/pop node by specified index.\n
  * Default is from the end of array.\n
  * Template variable: Type
  **/
@@ -279,7 +279,6 @@ void dynamic_array<Type>::insert(Type e, int indx){
     }
     
     if(size < capacity){
-        //array[size] = e;
         insert_e_capacity_fixed(e, indx);
         size += 1;
         check_expand();

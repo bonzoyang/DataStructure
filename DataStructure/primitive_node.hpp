@@ -47,6 +47,7 @@ class primitive_node{
 public:
     primitive_node* prev;   /**< A primitive_node pointer, point to previous node. */
     primitive_node* next;   /**< A primitive_node pointer, point to next node. */
+    primitive_node* parent; /**< A primitive_node pointer, point to parent node. */
     primitive_node*& left;  /**< An alias to prev, point to left child in tree structure. */
     primitive_node*& right; /**< An alias to next, point to right child in tree structure. */
 
@@ -62,6 +63,8 @@ public:
     friend ostream& operator << <Type> (ostream&, const primitive_node&); /**< Bound friend operator <<.*/
     friend istream& operator >> <Type> (istream&, primitive_node&);       /**< Bound friend operator >>.*/
     primitive_node& operator = (const primitive_node&);                   /**< Operator =.*/
+    bool operator == (const primitive_node&);                             /**< Operator ==.*/
+    bool operator != (const primitive_node&);                             /**< Operator !=.*/
     
     ~primitive_node();
     void set_node(Type);         /**< Set node value. */
@@ -95,7 +98,7 @@ using bonzo::_DEBUG_ON;
  * @see primitive_node(const primitive_node&)
  **/
 template <class Type>
-primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
+primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), parent(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
     print_dbg_msg(_DEBUG_ON, "primitive_node() is called");
     return;
 };
@@ -108,7 +111,7 @@ primitive_node<Type>::primitive_node() : prev(nullptr), next(nullptr), left(prev
  * @see primitive_node(const primitive_node&)
  **/
 template <class Type>
-primitive_node<Type>::primitive_node(const Type& rhs) : prev(nullptr), next(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
+primitive_node<Type>::primitive_node(const Type& rhs) : prev(nullptr), next(nullptr), parent(nullptr), left(prev), right(next)/*, is_left_null(&primitive_node::is_prev_null), is_right_null(&primitive_node::is_next_null)*/{
     node = rhs;
     print_dbg_msg(_DEBUG_ON, "primitive_node(const Type&) is called");
     return;
@@ -126,6 +129,7 @@ primitive_node<Type>::primitive_node(const primitive_node<Type>& rhs) : left(pre
     node = rhs.node;
     prev = rhs.prev;
     next = rhs.next;
+    parent = rhs.next;
     print_dbg_msg(_DEBUG_ON, "primitive_node(const primitive_node&) is called");
     return;
 };
@@ -211,7 +215,7 @@ inline bool primitive_node<Type>::is_right_null(){
  **/
 template <class Type>
 ostream& operator << (ostream& os, const primitive_node<Type>& rhs){
-    os << rhs.node << endl;
+    os << rhs.node;
     return os;
 }
 
@@ -239,8 +243,34 @@ primitive_node<Type>& primitive_node<Type>::operator = (const primitive_node<Typ
     node = rhs.node;
     prev = rhs.prev;
     next = rhs.next;
+    parent = rhs.parent;
     return *this;
 };
+   
+/**
+ * @fn primitive_node<Type>::operator == (const primitive_node& rhs)
+ * @brief Overload operator ==.
+ * @param rhs A reference to primitive_node, will be compare to *this.
+ * @retval true If rhs has same node value as *this.
+ * @retval false If rhs has different node value as *this.
+ **/
+template <typename Type>
+bool primitive_node<Type>::operator == (const primitive_node& rhs){
+    return node == rhs.node;
+}                             /**< Operator ==.*/
+
+/**
+ * @fn primitive_node<Type>::operator != (const primitive_node& rhs)
+ * @brief Overload operator !=.
+ * @param rhs A reference to primitive_node, will be compare to *this.
+ * @retval true If rhs has different node value as *this.
+ * @retval false If rhs has same node value as *this.
+ **/
+template <typename Type>
+bool primitive_node<Type>::operator != (const primitive_node& rhs){
+    return node != rhs.node;
+}                             /**< Operator !=.*/
+
 /** @} */ // end of group2
 
 }// end of namespace bonzo

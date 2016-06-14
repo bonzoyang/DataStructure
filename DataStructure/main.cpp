@@ -9,20 +9,24 @@
 
 
 #include <iostream>
+#include <iomanip>
 //#include "primitive_node.hpp"
 #include "linked_list.hpp"
+#include "stack.hpp"
+#include "queue.hpp"
+#include "binary_tree.hpp"
 
 using bonzo::dynamic_array;
 using bonzo::primitive_node;
 using bonzo::linked_list;
 using bonzo::vector;
+using bonzo::stack;
+using bonzo::queue;
+using bonzo::binary_tree;
 using std::cout;
 using std::cin;
 using std::endl;
-
-int f(int x){
-    return x+1;
-}
+using std::setiosflags;
 
 int main(int argc, const char * argv[]) {
 /*
@@ -284,7 +288,7 @@ int main(int argc, const char * argv[]) {
     cout << A << endl;
 */
 
-    
+/**********
     linked_list<int> BB;
     linked_list<int> BBtmp;
     BB.insert(1);
@@ -362,9 +366,8 @@ int main(int argc, const char * argv[]) {
     BB = BBtmp;
     cout << BB << endl;
     cout << "merge sort"<<endl;
-    BB.sort(&linked_list<int>::merge_sort, true);
+    BB.sort(&linked_list<int>::merge_sort, true );
     cout << BB << endl;
-
 
 
     BB = BBtmp;
@@ -372,8 +375,10 @@ int main(int argc, const char * argv[]) {
     cout << "quick sort"<<endl;
     BB.sort(&linked_list<int>::quick_sort, true);
     cout << BB << endl;
-
+*********/    
     
+
+/*
     linked_list<int> CC;
     CC = BB;
     cout << "CC == BB"<<endl;
@@ -405,7 +410,73 @@ int main(int argc, const char * argv[]) {
     
     cout << "BB == BB"<<endl;
     cout << (BB == BB)<<endl;
-   
+*/
+/*
+    stack<int> SA;
+    SA.push(1);
+    SA.push(2);
+    SA.push(3);
+    
+    stack<int> SB(SA);
+
+    cout << "=======\n";
+    cout << SA << endl;
+    SA.clear();
+    cout << SA <<endl;
+    
+    cout << "SB"<<endl;
+    cout << SB<< endl;
+    SB.push(999);
+    SB.push(1000);
+    cout << SB << endl;
+    cout << SB.pop() << endl;
+    
+    queue<int> QA;
+    QA.push(1);
+    QA.push(2);
+    QA.push(3);
+    cout << QA << endl;
+    QA.pop();
+    cout << QA << endl;
+    QA.pop();
+    cout << QA << endl;
+    QA.pop();
+    cout << QA << endl;
+*/
+//    cout << std::setw(4) <<setiosflags( std::ios::left)<< 4<<std::setw(4) <<setiosflags( std::ios::right)<<9;
+
+
+    binary_tree<int> BT;
+    BT.insert(1, BT.begin());
+    BT.insert(3, BT.begin());
+    BT.insert(5, BT.begin());
+    BT.insert(2, BT.begin()->left);
+    BT.insert(4, BT.begin()->left);
+    
+    BT.insert(6, BT.begin()->right);
+    BT.insert(8, BT.begin()->right);
+    
+    BT.insert(10, BT.begin()->left->right, false);
+    BT.insert(20, BT.begin()->left->right->right, false);
+    BT.insert(30, BT.begin()->left->right->right->right, false);
+    
+    cout << BT << endl;
+
+    BT.insert(40, BT.begin()->left->left);
+    BT.insert(50, BT.begin()->left->left->left);
+    BT.insert(60, BT.begin()->left->left->left->left);
+    cout << BT << endl;
+    cout << BT << endl;    
+    
+    cout <<"===== BT2 =====" << endl;
+    binary_tree<int> BT2(BT);
+    cout << BT2 << endl;
+    cout << (BT2 == BT)<<endl;
+    
+    BT2.insert(999, BT2.begin()->left->right);
+    cout << BT2 << endl;
+    cout << (BT == BT2)<<endl;
+    
 
 
 
