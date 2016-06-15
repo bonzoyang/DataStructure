@@ -28,17 +28,17 @@ namespace bonzo{
 template <class Type>
 class iterator{
     typedef primitive_node<Type>* pnode_ptr;
-    typedef pnode_ptr (iterator::* move_fp)(pnode_ptr);
+    typedef pnode_ptr (iterator::* move_fp)(pnode_ptr, bool);
     
 public:
     iterator();
     virtual pnode_ptr begin() const = 0;
     virtual pnode_ptr end() const = 0;
-    virtual pnode_ptr next(move_fp, pnode_ptr) const = 0;
-    virtual pnode_ptr travers1(pnode_ptr) = 0;
-    virtual pnode_ptr travers2(pnode_ptr) = 0;
-    virtual pnode_ptr travers3(pnode_ptr) = 0;
-    virtual pnode_ptr travers4(pnode_ptr) = 0;
+    virtual pnode_ptr next(move_fp, pnode_ptr, bool) const = 0;
+    virtual pnode_ptr travers1(pnode_ptr, bool) = 0;
+    virtual pnode_ptr travers2(pnode_ptr, bool) = 0;
+    virtual pnode_ptr travers3(pnode_ptr, bool) = 0;
+    virtual pnode_ptr travers4(pnode_ptr, bool) = 0;
 //private:
     pnode_ptr iter;
     move_fp move_next;

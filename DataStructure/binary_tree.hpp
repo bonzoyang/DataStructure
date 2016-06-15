@@ -58,7 +58,7 @@ ostream& operator << (ostream&, const binary_tree<Type>&);
 template <class Type>
 class binary_tree : /*public basic_op<Type>,*/ public iterator<Type>{
     typedef primitive_node<Type>* pnode_ptr;
-    typedef pnode_ptr (iterator<Type>::* move_fp)(pnode_ptr);
+    typedef pnode_ptr (iterator<Type>::* move_fp)(pnode_ptr, bool);
     typedef enum {ready, go_down, go_sibling, go_up} traves_state;
     
 public:
@@ -73,11 +73,11 @@ public:
     
     virtual pnode_ptr begin() const;
     virtual pnode_ptr end() const;
-    virtual pnode_ptr next(move_fp, pnode_ptr) const;
-    virtual pnode_ptr travers1(pnode_ptr);
-    virtual pnode_ptr travers2(pnode_ptr);
-    virtual pnode_ptr travers3(pnode_ptr);
-    virtual pnode_ptr travers4(pnode_ptr);
+    virtual pnode_ptr next(move_fp, pnode_ptr, bool = true) const;
+    virtual pnode_ptr travers1(pnode_ptr, bool = true);
+    virtual pnode_ptr travers2(pnode_ptr, bool = true);
+    virtual pnode_ptr travers3(pnode_ptr, bool = true);
+    virtual pnode_ptr travers4(pnode_ptr, bool = true);
     
     friend ostream& operator << <Type> (ostream&, const binary_tree<Type>&);
     
@@ -87,6 +87,7 @@ public:
 
 private:
     pnode_ptr root;
+    int height;
 //    pnode_ptr tail;
 //    pnode_ptr iter;
     queue<pnode_ptr> dft_q;
@@ -108,6 +109,7 @@ private:
     bool two_child(pnode_ptr) const;
     bool has_sibling(pnode_ptr) const;
     bool is_a_left_child(pnode_ptr) const;
+    bool is_a_right_child(pnode_ptr) const;
     bool has_left_child(pnode_ptr) const;
     bool has_right_child(pnode_ptr) const;
     
@@ -115,6 +117,7 @@ private:
     void make_bft_queue();
     void make_post_queue();
     void make_in_queue();
+    void update_status();
     int position(pnode_ptr) const;
     bool is_a_tree_node(pnode_ptr) const;
     void copy_from_tree(const binary_tree&, pnode_ptr = nullptr);
@@ -137,7 +140,7 @@ using bonzo::_DEBUG_ON;
  * @see binary_tree(const linked_list& rhs)
  **/
 template <class Type>
-binary_tree<Type>::binary_tree():root(nullptr){
+binary_tree<Type>::binary_tree():root(nullptr), height(0){
     return;
 }
 
@@ -160,7 +163,7 @@ binary_tree<Type>::binary_tree(binary_tree& rhs){
  **/
 template <class Type>
 binary_tree<Type>::~binary_tree(){
-    //clear();
+    clear();
     return;
 }
 
@@ -201,45 +204,55 @@ bool binary_tree<Type>::insert(Type e, pnode_ptr curr, bool add_at_left){
         new_node -> parent = curr;
     }
     
-    make_dft_queue();
-    make_bft_queue();
-    make_post_queue();
-    make_in_queue();
+    update_status();
     return true;
 }
 
 template<class Type>
 bool binary_tree<Type>::erase(pnode_ptr curr){
+    
     if(!is_a_tree_node(curr))
         return false;
     
-    stack<pnode_ptr> post_temp1;
-    stack<pnode_ptr> post_temp2;
+    // find curr's deepest and most left child
+    pnode_ptr del_node = curr;
+    while(!no_child(del_node))
+        del_node = next(&iterator<Type>::travers1, del_node);
     
-    post_temp1.push(curr);
-    while(!post_temp1.empty()){
-        curr = post_temp1.pop();
-        post_temp2.push(curr);
-
+    pnode_ptr del_node_next = next(&iterator<Type>::travers3, del_node);
+    
+    while(del_node != curr && del_node_next != nullptr){
+        if(is_a_left_child(del_node))
+            parent(del_node) -> left = nullptr;
+        else if(is_a_right_child(del_node))
+            parent(del_node) -> right = nullptr;
         
-        if(!no_child(curr)){
-            if(has_left_child(curr))
-                post_temp1.push(curr -> left);
-
-            if(has_right_child(curr))
-                post_temp1.push(curr -> right);
-        }
+        del_node_next = next(&iterator<Type>::travers3, del_node);
+        delete del_node;
+        del_node = del_node_next;
+     }
+    
+    
+    if(del_node == root){
+        root = nullptr;
     }
     
-    while(!post_temp2.empty())
-        delete post_temp2.pop();
-    
-    make_dft_queue();
-    make_bft_queue();
-    make_post_queue();
-    make_in_queue();
+    if(del_node != nullptr){
+        if(del_node == root)
+            root = nullptr;
+        
+        if(is_a_left_child(del_node))
+            parent(del_node) -> left = nullptr;
+        else if(is_a_right_child(del_node))
+            parent(del_node) -> right = nullptr;
+        delete del_node;
+    }
 
+    
+    update_status();
     return true;
+    
+    
 }
     
 template<class Type>
@@ -249,7 +262,7 @@ void binary_tree<Type>::clear(){
 
 
 template<class Type>
-void binary_tree<Type>::print(int node_wid, int dash) const{    
+void binary_tree<Type>::print(int node_wid, int dash) const{
     int unit = node_wid + dash;
     int level_node_cnt_phase0 = 1;
     int level_node_cnt_phase1 = 1;
@@ -260,6 +273,10 @@ void binary_tree<Type>::print(int node_wid, int dash) const{
     pnode_ptr curr = nullptr;
     int phase = 0;
     
+    if(root == nullptr){
+        cout << "<- ROOT"<<endl;
+        return;
+    }
     
     for(int i = 0; i < bft_q.size(); i++){
         curr = bft_q[i];
@@ -356,11 +373,11 @@ primitive_node<Type>* binary_tree<Type>::end() const {
 }
 
 template<class Type>
-primitive_node<Type>* binary_tree<Type>::next(move_fp m, pnode_ptr curr) const{
+primitive_node<Type>* binary_tree<Type>::next(move_fp m, pnode_ptr curr, bool direction) const{
     // iterator<Type>::move_next = m;
     const_cast<binary_tree*>(this) -> move_next = m;
     iterator<Type>* iterator_ptr = const_cast<binary_tree*>(this);
-    return (iterator_ptr ->* iterator<Type>::move_next)(curr);
+    return (iterator_ptr ->* iterator<Type>::move_next)(curr, direction);
 }
 
 /**
@@ -369,13 +386,16 @@ primitive_node<Type>* binary_tree<Type>::next(move_fp m, pnode_ptr curr) const{
  * @return tail A pointer to next node.
  **/
 template <class Type>
-primitive_node<Type>* binary_tree<Type>::travers1(pnode_ptr curr) {
+primitive_node<Type>* binary_tree<Type>::travers1(pnode_ptr curr, bool direction) {
     int i = 0;
     for( ; i < dft_q.size(); i++)
         if(dft_q[i] == curr)
             break;
     
-    return (i >= dft_q.size() - 1) ? nullptr : dft_q[i + 1];
+    if(direction)
+        return (i >= dft_q.size() - 1) ? nullptr : dft_q[i + 1];
+    else
+        return (i > dft_q.size() - 1) ? nullptr : dft_q[i - 1];
 }
 
     
@@ -385,13 +405,17 @@ primitive_node<Type>* binary_tree<Type>::travers1(pnode_ptr curr) {
  * @return tail A pointer to next node.
  **/
 template <class Type>
-primitive_node<Type>* binary_tree<Type>::travers2(pnode_ptr curr) {
+primitive_node<Type>* binary_tree<Type>::travers2(pnode_ptr curr, bool direction) {
     int i = 0;
     for( ; i < bft_q.size(); i++)
         if(bft_q[i] == curr)
             break;
     
-    return (i >= bft_q.size() - 1) ? nullptr : bft_q[i + 1];
+    if(direction)
+        return (i >= bft_q.size() - 1) ? nullptr : bft_q[i + 1];
+    else
+        return (i > bft_q.size() - 1) ? nullptr : bft_q[i - 1];
+
 }
 
 /**
@@ -400,13 +424,16 @@ primitive_node<Type>* binary_tree<Type>::travers2(pnode_ptr curr) {
  * @return tail A pointer to next node.
  **/
 template <class Type>
-primitive_node<Type>* binary_tree<Type>::travers3(pnode_ptr curr) {
+primitive_node<Type>* binary_tree<Type>::travers3(pnode_ptr curr, bool direction) {
     int i = 0;
     for( ; i < post_q.size(); i++)
         if(post_q[i] == curr)
             break;
     
-    return (i >= post_q.size() - 1) ? nullptr : post_q[i + 1];
+    if(direction)
+        return (i >= post_q.size() - 1) ? nullptr : post_q[i + 1];
+    else
+        return (i > post_q.size() - 1) ? nullptr : post_q[i - 1];
 }
     
 /**
@@ -415,13 +442,16 @@ primitive_node<Type>* binary_tree<Type>::travers3(pnode_ptr curr) {
  * @return tail A pointer to next node.
  **/
 template <class Type>
-primitive_node<Type>* binary_tree<Type>::travers4(pnode_ptr curr) {
+primitive_node<Type>* binary_tree<Type>::travers4(pnode_ptr curr, bool direction) {
     int i = 0;
     for( ; i < in_q.size(); i++)
         if(in_q[i] == curr)
             break;
     
-    return (i >= in_q.size() - 1) ? nullptr : in_q[i + 1];
+    if(direction)
+        return (i >= in_q.size() - 1) ? nullptr : in_q[i + 1];
+    else
+        return (i > in_q.size() - 1) ? nullptr : in_q[i - 1];
 }
 
 template <class Type>
@@ -434,7 +464,8 @@ ostream& operator << (ostream& os, const binary_tree<Type>& rhs){
 template <class Type>
 binary_tree<Type>& binary_tree<Type>::operator = (const binary_tree& rhs){
     if(&rhs != this)
-        copy_from_tree(rhs);
+        copy_from_tree(rhs, rhs.begin());
+    
     return *this;
 }
 
@@ -489,7 +520,7 @@ bool binary_tree<Type>::operator != (const binary_tree& rhs){
 
 template <class Type>
 primitive_node<Type>* binary_tree<Type>::parent(pnode_ptr curr) const{
-    return curr -> parent;
+    return curr == nullptr ? nullptr : curr -> parent;
 }
     
 template <class Type>
@@ -509,13 +540,17 @@ int binary_tree<Type>::children_count(pnode_ptr curr) const{
 
 template <class Type>
 int binary_tree<Type>::level_count(pnode_ptr curr){
-    int n = 1;
-    while(curr != root){
-        curr = parent(curr);
-        n += 1;
+    if(curr == nullptr)
+        return 0;
+    else{
+        int n = 1;
+        while(curr != root){
+            curr = parent(curr);
+            n += 1;
+        }
+        
+        return n;
     }
-    
-    return n;
 }
 
 template <class Type>
@@ -542,8 +577,14 @@ bool binary_tree<Type>::has_sibling(pnode_ptr curr) const{
     
 template <class Type>
 bool binary_tree<Type>::is_a_left_child(pnode_ptr curr) const{
-    return  parent(curr) == nullptr ? curr == nullptr : curr == parent(curr) -> left;
+    return  parent(curr) == nullptr ? false : curr == parent(curr) -> left;
 }
+    
+template <class Type>
+bool binary_tree<Type>::is_a_right_child(pnode_ptr curr) const{
+    return  parent(curr) == nullptr ? false : curr == parent(curr) -> right;
+}
+
 
 template <class Type>
 bool binary_tree<Type>::has_left_child(pnode_ptr curr) const{
@@ -559,8 +600,11 @@ bool binary_tree<Type>::has_right_child(pnode_ptr curr) const{
 template <class Type>
 void  binary_tree<Type>::make_dft_queue(){
     dft_q.clear();
+    if(root == nullptr)
+        return;
+    
     stack<pnode_ptr> dft_temp;
-
+    
     dft_temp.push(root);
     pnode_ptr curr;
     while(!dft_temp.empty()){
@@ -582,6 +626,9 @@ void  binary_tree<Type>::make_dft_queue(){
 template <class Type>
 void  binary_tree<Type>::make_bft_queue(){
     bft_q.clear();
+    if(root == nullptr)
+        return;
+
     queue<pnode_ptr> bft_temp;
     
     bft_temp.push(root);
@@ -605,6 +652,9 @@ void  binary_tree<Type>::make_bft_queue(){
 template <class Type>
 void  binary_tree<Type>::make_post_queue(){
     post_q.clear();
+    if(root == nullptr)
+        return;
+
     stack<pnode_ptr> post_temp1;
     stack<pnode_ptr> post_temp2;
     
@@ -636,6 +686,9 @@ void  binary_tree<Type>::make_post_queue(){
 template <class Type>
 void  binary_tree<Type>::make_in_queue(){
     in_q.clear();
+    if(root == nullptr)
+        return;
+
     stack<pnode_ptr> in_temp1;
     stack<bool> in_temp1_out;
     
@@ -671,6 +724,21 @@ void  binary_tree<Type>::make_in_queue(){
 
     return;
 }
+   
+template <class Type>
+void binary_tree<Type>::update_status(){
+    make_dft_queue();
+    make_bft_queue();
+    make_post_queue();
+    make_in_queue();
+    
+    if(bft_q.size() != 0)
+        height = level_count(bft_q[bft_q.size() - 1]);
+    else
+        height = 0;
+    return;
+}
+    
 template <class Type>
 int  binary_tree<Type>::position(pnode_ptr curr) const{
     for(int i = 0; i < in_q.size(); i++)
@@ -706,26 +774,23 @@ void binary_tree<Type>::copy_from_tree(const binary_tree& rhs, pnode_ptr rhs_cur
         rhs_curr = rhs.begin();
     
     pnode_ptr curr;
-    pnode_ptr rhs_curr_temp = rhs_curr;
     
     insert(rhs_curr -> get_node(), root);
     curr = root;
     
-    while(rhs_curr != nullptr){
-            if(rhs.has_left_child(rhs_curr)){
-                rhs_curr_temp = rhs.next(&iterator<Type>::travers2, rhs_curr_temp);
-                if(rhs_curr_temp != nullptr)
-                    insert(rhs_curr_temp -> get_node(), curr, true);
-            }
+    while(rhs_curr != nullptr && curr != nullptr){
+        if(rhs.has_left_child(rhs_curr)){
+            if(!has_left_child(curr))
+                insert(rhs_curr -> left -> get_node(), curr, true);
+        }
         
-            if(rhs.has_right_child(rhs_curr)){
-                rhs_curr_temp = rhs.next(&iterator<Type>::travers2, rhs_curr_temp);
-                if(rhs_curr_temp != nullptr)
-                    insert(rhs_curr_temp -> get_node(), curr, false);
-            }
+        if(rhs.has_right_child(rhs_curr)){
+            if(!has_right_child(curr))
+                insert(rhs_curr -> right -> get_node(), curr, false);
+        }
 
-        rhs_curr = rhs.next(&iterator<Type>::travers2, rhs_curr);
-        curr = next(&iterator<Type>::travers2, curr);
+        rhs_curr = rhs.next(&iterator<Type>::travers1, rhs_curr);
+        curr = next(&iterator<Type>::travers1, curr);
         
     }
     return;

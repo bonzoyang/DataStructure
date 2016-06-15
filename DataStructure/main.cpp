@@ -477,6 +477,37 @@ int main(int argc, const char * argv[]) {
     cout << BT2 << endl;
     cout << (BT == BT2)<<endl;
     
+    cout <<"===== BT3 =====" << endl;
+
+    binary_tree<int> BT3;
+    cout << BT3 << endl;
+    BT3 = BT2.sub_tree(BT2.begin() -> left -> right);
+    
+    cout << BT3 << endl;
+    
+    cout << (BT3 == BT2)<<endl;
+    
+    cout << "BT3.erase(BT3.begin() -> right -> right);" << endl;
+    BT3.erase(BT3.begin() -> right -> right);
+    cout << BT3 << endl;
+
+    cout << "BT3.erase(BT3.begin() -> left);" << endl;
+    BT3.erase(BT3.begin() -> left);
+    cout << BT3 << endl;
+
+    cout << "BT3.erase(BT3.begin());" << endl;
+    BT3.erase(BT3.begin());
+    cout << BT3 << endl;
+    
+    cout <<"===== BT2 =====" << endl;
+    BT2.erase(BT2.begin() -> left);
+    cout << BT2 << endl;
+    
+    BT2.erase(BT2.begin() -> right);
+    cout << BT2 << endl;
+
+    
+
 
 
 
